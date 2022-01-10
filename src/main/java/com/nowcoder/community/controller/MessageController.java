@@ -26,6 +26,8 @@ public class MessageController {
     private ThreadUtil threadUtil;
     @Autowired
     private UserService userService;
+
+
     @RequestMapping(method = RequestMethod.GET,path = "/letter/list")
     public String showLetter(Model model, Page page){
         User user = threadUtil.getThreadLocal();

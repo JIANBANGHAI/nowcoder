@@ -1,5 +1,6 @@
 package com.nowcoder.community.controller;
 
+import com.nowcoder.community.annotition.LoginRequire;
 import com.nowcoder.community.entity.Comment;
 import com.nowcoder.community.entity.User;
 import com.nowcoder.community.service.CommentService;
@@ -20,6 +21,7 @@ public class CommentController {
     @Autowired
     private ThreadUtil threadUtil;
 
+    @LoginRequire
     @RequestMapping(method = RequestMethod.POST,path = "/add/{detailId}")
     public String addComment(@PathVariable("detailId")String detailId, Comment comment){
         User threadLocal = threadUtil.getThreadLocal();

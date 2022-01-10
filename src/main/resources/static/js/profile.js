@@ -6,9 +6,30 @@ function follow() {
 	var btn = this;
 	if($(btn).hasClass("btn-info")) {
 		// 关注TA
-		$(btn).text("已关注").removeClass("btn-info").addClass("btn-secondary");
+		$.post(
+			COUNT_PATH+"/follow",
+			{"entityType":3,"entityId":$(btn).prev().val()},
+			function (data) {
+				data = $.parseJSON(data);
+				if (data.code==200){
+					window.location.reload();
+				}
+			}
+		);
+
 	} else {
 		// 取消关注
-		$(btn).text("关注TA").removeClass("btn-secondary").addClass("btn-info");
+		$.post(
+			COUNT_PATH+"/follower",
+			{"entityType":3,"entityId":$(btn).prev().val()},
+			function (data) {
+				data = $.parseJSON(data);
+				if(data.code==200){
+					window.location.reload();
+				}else {
+					alert(data.msg);
+				}
+			}
+		);
 	}
 }

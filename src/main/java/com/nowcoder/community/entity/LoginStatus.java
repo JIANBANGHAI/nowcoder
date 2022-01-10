@@ -12,4 +12,6 @@ public interface LoginStatus {
     int ENTITY_TYPE_DISCUSS = 1;
 
     int ENTITY_ID_DISCUSS = 2;
+
+    int ENTITY_USER_DISCUSS = 3;
 }

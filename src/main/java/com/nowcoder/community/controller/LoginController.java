@@ -4,6 +4,7 @@ import com.google.code.kaptcha.Producer;
 import com.nowcoder.community.dao.LoginTicketMapper;
 import com.nowcoder.community.entity.*;
 import com.nowcoder.community.service.DiscussPostService;
+import com.nowcoder.community.service.LikeService;
 import com.nowcoder.community.service.UserService;
 import com.sun.deploy.net.HttpResponse;
 import org.apache.commons.lang3.StringUtils;
@@ -39,12 +40,13 @@ public class LoginController implements LoginStatus {
     @Autowired
     private Producer kaptcharPoducer;
     @Autowired
-    private LoginTicketMapper loginTicketMapper;
+    private LikeService likeService;
 
     @RequestMapping(method = RequestMethod.GET,path ="/index")
     public String getListAll(Model model, Page page){
         page.setPath("/index");
         page.setRows(discussPostService.getListCount(0));
+
         //显示当前的起始行并且显示上限
         List<Discuss> listAll = discussPostService.getListAll(0, page.startPage(), page.getLimit());
         List<Map<String,Object>> lists = new ArrayList<>();
@@ -54,6 +56,8 @@ public class LoginController implements LoginStatus {
                 map.put("discuss",discuss);
                 User user = userService.getUserById(discuss.getUserId());
                 map.put("user",user);
+                long likeCount = likeService.getLikeCount(ENTITY_TYPE_DISCUSS, discuss.getId());
+                map.put("likeCount",likeCount);
                 lists.add(map);
             }
         }

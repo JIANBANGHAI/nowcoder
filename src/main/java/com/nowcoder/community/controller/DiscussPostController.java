@@ -1,7 +1,9 @@
 package com.nowcoder.community.controller;
+import com.nowcoder.community.annotition.LoginRequire;
 import com.nowcoder.community.entity.*;
 import com.nowcoder.community.service.CommentService;
 import com.nowcoder.community.service.DiscussPostService;
+import com.nowcoder.community.service.LikeService;
 import com.nowcoder.community.service.UserService;
 import com.nowcoder.community.utils.CommunityUtil;
 import com.nowcoder.community.utils.ThreadUtil;
@@ -29,7 +31,10 @@ public class DiscussPostController implements LoginStatus {
     private UserService userService;
     @Autowired
     private CommentService commentService;
+    @Autowired
+    private LikeService likeService;
 
+    @LoginRequire
     @RequestMapping(method = RequestMethod.POST,path = "/addDiscuss")
     @ResponseBody
     public String addDiscuss(String title,String content){
@@ -53,10 +58,16 @@ public class DiscussPostController implements LoginStatus {
     public String getDiscussById(@PathVariable("detailId") int detailId,Model model,Page page){
         //帖子对象
         Discuss discuss = discussPostService.getDiscuss(detailId);
+        model.addAttribute("discuss",discuss);
         //用户对象
         User user = userService.getUserById(discuss.getUserId());
-        model.addAttribute("discuss",discuss);
         model.addAttribute("user",user);
+        //帖子数量
+        long likeCount = likeService.getLikeCount(ENTITY_TYPE_DISCUSS, discuss.getId());
+        model.addAttribute("likeCount",likeCount);
+        //点赞状态
+        int likeStatus = likeService.getLikeStatus(threadUtil.getThreadLocal().getId() == 0 ? 1 : threadUtil.getThreadLocal().getId(), ENTITY_TYPE_DISCUSS, detailId);
+        model.addAttribute("likeStatus",likeStatus);
 
         page.setLimit(5);
         page.setPath("/discuss/detail/" + detailId);
@@ -70,7 +81,12 @@ public class DiscussPostController implements LoginStatus {
                 Map<String,Object> map = new HashMap<>();
                 map.put("comment",comment);
                 map.put("user",userService.getUserById(comment.getUserId()));
-
+                //帖子数量
+                likeCount = likeService.getLikeCount(ENTITY_ID_DISCUSS, comment.getId());
+                map.put("likeCount",likeCount);
+                //点赞状态
+                likeStatus = likeService.getLikeStatus(threadUtil.getThreadLocal().getId() == 0 ? 1 : threadUtil.getThreadLocal().getId(), ENTITY_ID_DISCUSS, comment.getId());
+                map.put("likeStatus",likeStatus);
                 //回复
                 List<Comment> allReply = commentService.getAllComment(ENTITY_ID_DISCUSS, comment.getId(), 0, Integer.MAX_VALUE);//显示最多回复
 
@@ -83,6 +99,12 @@ public class DiscussPostController implements LoginStatus {
 
                         User target = reply.getTargetId() == 0 ? null : userService.getUserById(reply.getTargetId());
                         mapForReply.put("target",target);
+
+                        likeCount = likeService.getLikeCount(ENTITY_ID_DISCUSS, reply.getId());
+                        mapForReply.put("likeCount",likeCount);
+                        //点赞状态
+                        likeStatus = likeService.getLikeStatus(threadUtil.getThreadLocal().getId() == 0 ? 1 : threadUtil.getThreadLocal().getId(), ENTITY_ID_DISCUSS, reply.getId());
+                        mapForReply.put("likeStatus",likeStatus);
 
                         replyList.add(mapForReply);
                     }

@@ -1,11 +1,15 @@
 package com.nowcoder.community.controller;
 
 import com.nowcoder.community.annotition.LoginRequire;
+import com.nowcoder.community.entity.LoginStatus;
 import com.nowcoder.community.entity.User;
+import com.nowcoder.community.service.LikeService;
+import com.nowcoder.community.service.MyAttentionService;
 import com.nowcoder.community.service.UserService;
 import com.nowcoder.community.utils.CommunityUtil;
 import com.nowcoder.community.utils.ThreadUtil;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
@@ -18,27 +22,29 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.util.Map;
+import org.slf4j.Logger;
 
 @Controller
 @RequestMapping("/user")
-public class UserController {
+public class UserController implements LoginStatus {
     @Value("${community.path.domin}")//用域名
     private String domin;
     @Value("${head.portrait.path}")//储存本地路径
     private String uploadPath;
     @Value("${server.servlet.context-path}")//当前访问路径
     private String contentPath;
+    private static final Logger logger  = LoggerFactory.getLogger(UserController.class);
 
     @Autowired
     private ThreadUtil threadUtil;
     @Autowired
     private UserService userService;
 
-    @LoginRequire
-    @RequestMapping(path = "/homePage",method = RequestMethod.GET)
-    public String showUser(){
-        return "/site/profile";
-    }
+    @Autowired
+    private LikeService likeService;
+
+    @Autowired
+    private MyAttentionService myAttentionService;
 
     @LoginRequire
     @RequestMapping(path = "/setting", method = RequestMethod.GET )
@@ -115,5 +121,35 @@ public class UserController {
         } catch (IOException e) {
             System.out.println("读取头像失败");
         }
+    }
+    @RequestMapping(method = RequestMethod.GET,path = "/profile/{entityUserId}")
+    public String getHomeProfile(@PathVariable("entityUserId") int entityUserId,Model model){
+        User user = userService.getUserById(entityUserId);
+        if (user==null){
+            throw new NullPointerException("用户为空!");
+        }
+        //用户
+        model.addAttribute("user",user);
+
+        //赞
+        int userCount = likeService.getUserCount(entityUserId);
+        model.addAttribute("userCount",userCount);
+
+        //关注..人
+        long followCount = myAttentionService.getFollowCount(entityUserId, ENTITY_USER_DISCUSS);
+        model.addAttribute("followCount",followCount);
+
+        //关注者
+        long followerCount = myAttentionService.getFollowerCount(ENTITY_USER_DISCUSS, entityUserId);
+        model.addAttribute("followerCount",followerCount);
+
+        //关注状态
+        boolean b = false;
+        if (threadUtil.getThreadLocal() != null) {
+            b = myAttentionService.followerStatus(threadUtil.getThreadLocal().getId(), ENTITY_USER_DISCUSS, user.getId());
+        }
+        logger.debug("b:"+b);
+        model.addAttribute("b", b);
+        return "/site/profile";
     }
 }

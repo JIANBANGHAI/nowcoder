@@ -17,7 +17,7 @@ public class ExceptionAdvice {
     public static final Logger logger = LoggerFactory.getLogger(ExceptionAdvice.class);
     @ExceptionHandler({Exception.class})
     public void handlerException(Exception e, HttpServletResponse response, HttpServletRequest request) throws IOException {
-        logger.error("服务器异常:"+e.getMessage());
+        logger.error("服务器异常:{}",e.getMessage());
         StackTraceElement[] stackTrace = e.getStackTrace();
         for (StackTraceElement stackTraceElement : stackTrace) {
             logger.error(stackTraceElement.toString());

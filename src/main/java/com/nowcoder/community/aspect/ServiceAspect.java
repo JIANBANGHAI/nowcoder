@@ -1,9 +1,7 @@
 package com.nowcoder.community.aspect;
 
 import org.aspectj.lang.JoinPoint;
-import org.aspectj.lang.annotation.Aspect;
-import org.aspectj.lang.annotation.Before;
-import org.aspectj.lang.annotation.Pointcut;
+import org.aspectj.lang.annotation.*;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -21,6 +19,17 @@ public class ServiceAspect {
     public void pointCut(){
 
     }
+    @Pointcut("execution(* com.nowcoder.community.service.LikeService.getLikeCount(..))")
+    public void afterPointCut(){
+
+    }
+
+    @Pointcut("execution(* com.nowcoder.community.service.LikeService.getLike(..))")
+    public void after1PointCut(){
+
+    }
+
+
     @Before("pointCut()")
     public void before(JoinPoint joinPoint){
         ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
@@ -31,4 +40,17 @@ public class ServiceAspect {
         String target = joinPoint.getSignature().getDeclaringTypeName() + "." + joinPoint.getSignature().getName();
         logger.info(String.format("用户[%s],在[%s],访问了[%s].", ip, time, target));
     }
+    @AfterReturning(returning="rvt", pointcut = "afterPointCut()")
+    public Object AfterExec(JoinPoint joinPoint,Object rvt){
+        //pointcut是对应的注解类   rvt就是方法运行完之后要返回的值
+        logger.info("获取目标方法的返回值：" + rvt);
+        return rvt;
+    }
+    @AfterReturning(returning="rvt", pointcut = "after1PointCut()")
+    public Object AfterExec1(JoinPoint joinPoint,Object rvt){
+        //pointcut是对应的注解类   rvt就是方法运行完之后要返回的值
+        logger.info("获取目标方法的返回值：" + rvt);
+        return rvt;
+    }
+
 }
