@@ -6,12 +6,15 @@ import com.nowcoder.community.entity.*;
 import com.nowcoder.community.service.DiscussPostService;
 import com.nowcoder.community.service.LikeService;
 import com.nowcoder.community.service.UserService;
+import com.nowcoder.community.utils.CommunityUtil;
+import com.nowcoder.community.utils.RedisUtils;
 import com.sun.deploy.net.HttpResponse;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -27,6 +30,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 @Controller
 public class LoginController implements LoginStatus {
@@ -41,6 +45,9 @@ public class LoginController implements LoginStatus {
     private Producer kaptcharPoducer;
     @Autowired
     private LikeService likeService;
+
+    @Autowired
+    private RedisTemplate redisTemplate;
 
     @RequestMapping(method = RequestMethod.GET,path ="/index")
     public String getListAll(Model model, Page page){
@@ -108,11 +115,21 @@ public class LoginController implements LoginStatus {
     }
 
     @RequestMapping(method = RequestMethod.GET,value = "/kaptcha")
-    public void kaptcha(HttpServletResponse response, HttpSession httpSession){
+    public void kaptcha(HttpServletResponse response ){
         String text = kaptcharPoducer.createText();
         BufferedImage image = kaptcharPoducer.createImage(text);
 
-        httpSession.setAttribute("kaptcha",text);
+
+        String userTicket = CommunityUtil.generateUUId();
+        Cookie cookie = new Cookie("userTicket",userTicket);
+        cookie.setPath(contentPath);
+        cookie.setMaxAge(60);
+        response.addCookie(cookie);
+
+        String result = RedisUtils.saveCode(userTicket);
+        redisTemplate.opsForValue().set(result,text,60, TimeUnit.SECONDS);
+        //kaptch:sd91
+
         response.setContentType("image/png");
 
         try {
@@ -125,9 +142,15 @@ public class LoginController implements LoginStatus {
 
     @RequestMapping(method = RequestMethod.POST,value = "/login")
     public String loginPost(String username,String password,String code,boolean remeberme,
-                        Model model,HttpSession httpSession,HttpServletResponse response){
+                        Model model,HttpServletResponse response,@CookieValue("userTicket") String userTicket){
         //验证码
-        String kaptcha = (String) httpSession.getAttribute("kaptcha");
+//        String kaptcha = (String) httpSession.getAttribute("kaptcha");
+
+        String kaptcha = null;
+        if (StringUtils.isNoneBlank(userTicket)){
+            String result = RedisUtils.saveCode(userTicket);
+            kaptcha = (String) redisTemplate.opsForValue().get(result);
+        }
         if(StringUtils.isBlank(code)||StringUtils.isBlank(kaptcha)||!kaptcha.equalsIgnoreCase(code)){
             model.addAttribute("codeMsg","验证码错误");
             return "/site/login";

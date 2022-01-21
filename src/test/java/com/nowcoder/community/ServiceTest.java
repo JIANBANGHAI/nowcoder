@@ -1,6 +1,8 @@
 package com.nowcoder.community;
 
-import com.nowcoder.community.utils.CommunityUtil;
+import com.nowcoder.community.entity.User;
+import com.nowcoder.community.service.MessageService;
+import com.nowcoder.community.service.UserService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,27 +11,24 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.util.HashMap;
-import java.util.Map;
-
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @ContextConfiguration(classes = CommunityApplication.class)
-public class JsonTest {
+public class ServiceTest {
+    @Autowired
+    private UserService userService;
     @Autowired
     private RedisTemplate redisTemplate;
+    @Autowired
+    private MessageService messageService;
+
     @Test
-    public void jsonT1(){
-        Map<String,Object> map = new HashMap<>();
-        map.put("name","admin");
-        map.put("age",20);
-        String fastJson = CommunityUtil.getFastJson(0, "successful!",map);
-        System.out.println(fastJson);
+    public void s1t(){
+        User aCatch = userService.getCatch(111);
+        System.out.println(aCatch);
     }
     @Test
-    public void a1(){
-       redisTemplate.opsForValue().set("name","admin");
-       redisTemplate.opsForValue().get("name");
+    public void s2t(){
 
     }
 }

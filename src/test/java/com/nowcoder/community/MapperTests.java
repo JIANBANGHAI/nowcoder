@@ -141,4 +141,25 @@ public class MapperTests {
         System.out.println("listcount:"+listCount+","+"letterscouont:"+i);
     }
 
+    @Test
+    public void aa(){
+        User user = userMapper.selectById(169);
+        System.out.println(user);
+    }
+    @Test
+    public void messageServiceTest(){
+        Message message = new Message();
+        message.setFromId(1);
+        message.setToId(169);
+        message.setConversationId("comment");
+        message.setCreateTime(new Date());
+        message.setContent("{null}");
+        message.setStatus(0);
+        try {
+            int i = messageMapper.insertMessage(message);
+        } catch (Exception e) {
+            System.out.println("error");
+        }
+    }
+
 }

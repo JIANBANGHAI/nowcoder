@@ -26,5 +26,18 @@ public interface MessageMapper {
 
     int selectLettersUnReadCount(String conversationId,int userId);
 
+    int insertMessage(Message message);
 
+    //评论详情
+    Message findMessageByNotice(int userId,String topic);
+
+    //评论已读数量
+    int findMessageByNoticeCount(int userId,String topic);
+
+    //评论未读数量
+    int findMessageByNoticeUnRead(int userId,String topic);
+
+    int updateStatus(List<Integer> ids, int status);
+
+    List<Message> findAllDetailMessage(int userId,String topic,int start,int end);
 }

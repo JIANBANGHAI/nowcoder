@@ -2,7 +2,7 @@ package com.nowcoder.community.entity;
 
 /**
  * 模型
- * 首页-上一页-页码-下一页-莫邪
+ * 首页-上一页-页码-下一页-末页
  */
 public class Page {
     //当前页码

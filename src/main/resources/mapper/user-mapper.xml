@@ -8,6 +8,10 @@
         username, password, salt, email, type, status, activation_code, header_url, create_time
     </sql>
 
+    <!--
+    id, username, password, salt, email, type, status, activation_code, header_url, create_time
+    activation_code, header_url, create_time,id, username, password, salt, email, type, status,
+    -->
     <sql id="selectFields">
         id, username, password, salt, email, type, status, activation_code, header_url, create_time
     </sql>

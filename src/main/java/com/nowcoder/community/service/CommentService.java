@@ -49,4 +49,12 @@ public class CommentService {
         }
         return i;
     }
+
+    public Comment getCommentById(int id){
+        Comment comment = commentMapper.findByIdComment(id);
+        if (comment==null){
+            return null;
+        }
+        return comment;
+    }
 }

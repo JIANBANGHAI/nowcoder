@@ -14,4 +14,9 @@ public interface LoginStatus {
     int ENTITY_ID_DISCUSS = 2;
 
     int ENTITY_USER_DISCUSS = 3;
+
+    String TOPIC_TYPE_COMMENT = "comment";
+    String TOPIC_TYPE_LIKE = "like";
+    String TOPIC_TYPE_FOLLOW = "follow";
+    int  SYSTEM_ID = 1;
 }

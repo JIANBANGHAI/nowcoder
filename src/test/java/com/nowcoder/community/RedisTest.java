@@ -1,6 +1,8 @@
 package com.nowcoder.community;
 
+import com.nowcoder.community.entity.User;
 import com.nowcoder.community.service.LikeService;
+import com.nowcoder.community.utils.CommunityUtil;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +28,12 @@ public class RedisTest {
 
     @Test
     public void likeServiceTest(){
+        User user = new User();
+        user.setUsername("admin");
+        user.setEmail("123@.com");
+        User o = (User) redisTemplate.opsForValue().get(user);
+        String s = CommunityUtil.getFastJson(200,user.toString());
+        System.out.println(s);
 
     }
     @Test

@@ -8,10 +8,12 @@ import com.nowcoder.community.entity.LoginTicket;
 import com.nowcoder.community.entity.User;
 import com.nowcoder.community.utils.CommunityUtil;
 import com.nowcoder.community.utils.MailClinet;
+import com.nowcoder.community.utils.RedisUtils;
 import com.nowcoder.community.utils.ThreadUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -23,6 +25,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class UserService  implements LoginStatus {
@@ -43,10 +46,14 @@ public class UserService  implements LoginStatus {
     @Autowired
     private ThreadUtil threadUtil;
     @Autowired
-    private LoginTicketMapper loginTicketMapper;
+    private RedisTemplate redisTemplate;
 
     public User getUserById(int id) {
-        return  userMapper.selectById(id);
+        User user = getCatch(id);
+        if (user==null){
+            user = initCatch(id);
+        }
+        return  user;
     }
 
     public Map<String,Object> registerResult(User user){
@@ -98,19 +105,6 @@ public class UserService  implements LoginStatus {
         return map;
     }
 
-    public int checkEmail(int userId,String code){
-        User user = userMapper.selectById(userId);
-        if (user.getStatus()==1){
-            return EXIST;
-        }else if (user.getActivationCode().equals(code)){
-            userMapper.updateStatus(userId,1);
-            return SUCCESS;
-        }else {
-            return FIELD;
-        }
-
-    }
-
     public Map<String,Object> login( String username,String password,int expired){
         Map<String,Object> map = new HashMap<>();
         if(StringUtils.isBlank(username)){
@@ -145,17 +139,14 @@ public class UserService  implements LoginStatus {
         loginTicket.setTicket(CommunityUtil.generateUUId());
         loginTicket.setStatus(0);
         loginTicket.setExpired(new Date(System.currentTimeMillis()+expired*1000));
-        loginTicketMapper.insertLoginTicket(loginTicket);
+
+//        loginTicketMapper.insertLoginTicket(loginTicket);
+        String key = RedisUtils.saveCode(loginTicket.getTicket());
+
+        redisTemplate.opsForValue().set(key,loginTicket);
 
         map.put("ticket",loginTicket.getTicket());
         return map;
-    }
-    public void loginOut(String ticket ){
-        loginTicketMapper.updateLoginTicket(ticket,1);
-    }
-
-    public LoginTicket getTicket(String ticket){
-        return loginTicketMapper.selectByLoginTickek(ticket);
     }
 
     public Map<String,Object> updatePwd(String password ,String newPassword,String confirmPassword) {
@@ -196,7 +187,57 @@ public class UserService  implements LoginStatus {
         userMapper.updatePassword(user.getId(),confirmPassword);
         return map;
     }
+
+    public void loginOut(String ticket ){
+//        loginTicketMapper.updateLoginTicket(ticket,1);
+        String key = RedisUtils.saveCode(ticket);
+        LoginTicket loginTicket = (LoginTicket) redisTemplate.opsForValue().get(key);
+        loginTicket.setStatus(1);
+        redisTemplate.opsForValue().set(key,loginTicket);
+    }
+
+    public int checkEmail(int userId,String code){
+        User user = userMapper.selectById(userId);
+        if (user.getStatus()==1){
+            return EXIST;
+        }else if (user.getActivationCode().equals(code)){
+            userMapper.updateStatus(userId,1);
+            return SUCCESS;
+        }else {
+            return FIELD;
+        }
+
+    }
+
+    public LoginTicket getTicket(String ticket){
+        String key = RedisUtils.saveCode(ticket);
+        return (LoginTicket) redisTemplate.opsForValue().get(key);
+//        return loginTicketMapper.selectByLoginTickek(ticket);
+    }
+
     public int updateUrlHeader(int id, String headerUrl){
-        return userMapper.updateHeader(id,headerUrl);
+        int i = userMapper.updateHeader(id, headerUrl);
+        deleteCatchKey(id);
+        return i;
+    }
+
+    //TODO 定义缓存用户的逻辑
+
+    //1.存储用户检查缓存有/无,没有就存
+    public User getCatch(int userId){
+        String key = RedisUtils.getCatchKey(userId);
+        return (User) redisTemplate.opsForValue().get(key);
+    }
+    //2.初始化redis缓存
+    public User initCatch(int userId){
+        User user = userMapper.selectById(userId);
+        String key = RedisUtils.getCatchKey(userId);
+        redisTemplate.opsForValue().set(key,user,3600, TimeUnit.SECONDS);
+        return user;
+    }
+    //3.修改状态，删除redis缓存
+    public void deleteCatchKey(int userId){
+        String key = RedisUtils.getCatchKey(userId);
+        redisTemplate.delete(key);
     }
 }

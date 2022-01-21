@@ -42,4 +42,14 @@
         insert into comment(<include refid="insert"></include>)
         values(#{userId},#{entityType},#{entityId},#{targetId},#{content},#{status},#{createTime})
     </insert>
+
+    <select id="findByIdComment" resultType="Comment">
+        select
+        <include refid="select"></include>
+        from comment
+        where
+        id=#{id}
+        and
+        status=0
+    </select>
 </mapper>
